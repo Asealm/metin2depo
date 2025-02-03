@@ -47,8 +47,7 @@ set "inputFile=%~1"
 
 :: AES şifreleme çözme işlemi (PowerShell ile)
 powershell -NoProfile -Command ^
-    "$key = 'now';" ^  :: Bu kısmı AES için 256-bit anahtar olarak ayarlayacağız.
-    "$key = '12345678901234567890123456789012';" ^  :: 32-byte (256-bit) anahtar kullanın.
+    "$key = '12345678901234567890123456789012';" ^  :: 32-byte (256-bit) anahtar kullanıyoruz
     "$content = [System.IO.File]::ReadAllBytes(\"%inputFile%\");" ^
     "$keyBytes = [System.Text.Encoding]::UTF8.GetBytes($key);" ^
     "for ($i = 0; $i -lt $content.Length; $i++) {" ^
