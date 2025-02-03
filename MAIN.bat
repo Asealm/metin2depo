@@ -40,7 +40,7 @@ exit /b
 set "inputFile=%~1"
 
 powershell -NoProfile -Command ^
-    "$key = [System.Text.Encoding]::UTF8.GetBytes('strong_secret_key_here_256bits');" ^   # 256 bit key
+    "$key = [System.Text.Encoding]::UTF8.GetBytes('strong_secret_key_here_256bits');" ^  # 256-bit key
     "$key = $key[0..31]"  ^  # Ensure key is 256 bits (32 bytes)
     "$iv = [System.Text.Encoding]::UTF8.GetBytes('1234567890123456');"  ^  # 16 bytes for IV
     "$content = [System.IO.File]::ReadAllBytes(\"%inputFile%\");" ^
